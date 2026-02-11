@@ -1,0 +1,103 @@
+# Admin Dashboard
+
+React + TypeScript + Tailwind CSS로 구축된 스포츠 커뮤니티 관리자 대시보드 템플릿입니다.
+
+![Dashboard Preview](./sample.png)
+
+## 주요 특징
+
+- **기술 스택**: React 19 + TypeScript + Vite + Tailwind CSS
+- **반응형**: 모바일, 태블릿, 데스크톱 지원
+- **테마 전환**: 다크/라이트 모드 지원
+- **차트 기능**: ApexCharts를 활용한 데이터 시각화
+- **지도 기능**: 벡터 맵을 활용한 지역별 데이터 표시
+- **모듈화된 구조**: 재사용 가능한 컴포넌트 설계
+- **빠른 개발**: Vite의 HMR과 TypeScript 지원
+
+## 기술 스택
+
+### 핵심 프레임워크
+- **React 19** - 최신 React 기능 활용
+- **TypeScript** - 타입 안정성과 개발 생산성
+- **Vite 6** - 빠른 빌드 도구와 개발 서버
+
+### 스타일링 & UI
+- **Tailwind CSS 4** - 유틸리티 퍼스트 CSS 프레임워크
+- **Lucide React** - 아이콘 라이브러리
+- **SVGR** - SVG를 React 컴포넌트로 변환
+
+### 차트 & 시각화
+- **ApexCharts 4.1.0** - 차트 라이브러리
+- **React ApexCharts 1.7.0** - React용 ApexCharts 래퍼
+- **@react-jvectormap** - 벡터 맵 컴포넌트
+
+### 라우팅 & 상태 관리
+- **React Router DOM 7** - 클라이언트 라우팅
+- **React Helmet Async** - 메타데이터 관리
+- **Context API** - 상태 관리
+
+### 기타 유틸리티
+- **clsx** - 클래스명 관리
+- **tailwind-merge** - 클래스 충돌 해결
+- **flatpickr** - 날짜 선택기
+- **swiper** - 슬라이더
+
+## 빠른 시작
+
+### 1. 저장소 클론
+```bash
+git clone https://github.com/your-username/sport-community-admin.git
+cd sport-community-admin
+```
+
+### 2. 의존성 설치
+```bash
+git clone https://github.com/TailAdmin/free-react-tailwind-admin-dashboard.git
+```
+
+### 개발 서버 실행
+
+```bash
+npm run dev
+```
+
+### 빌드
+
+```bash
+npm run build
+```
+
+## 주요 기능
+
+- ✅ 반응형 레이아웃 (모바일/태블릿/데스크톱)
+- ✅ 사이드바 네비게이션
+- ✅ 대시보드 (통계 카드, 최근 활동)
+- ✅ 회원 관리
+- ✅ 커뮤니티 관리
+- ✅ 게시물 관리
+- ✅ 경기 관리
+- ✅ 일정 관리
+- ✅ 통계 분석
+- ✅ 설정
+
+## 프로젝트 구조
+
+```
+src/
+├── components/
+│   └── layout/
+│       ├── Layout.tsx      # 메인 레이아웃
+│       ├── Sidebar.tsx     # 사이드바 네비게이션
+│       └── Header.tsx      # 헤더
+├── pages/
+│   ├── Dashboard.tsx       # 대시보드
+│   ├── Users.tsx          # 회원 관리
+│   ├── Community.tsx      # 커뮤니티 관리
+│   ├── Posts.tsx          # 게시물 관리
+│   ├── Matches.tsx        # 경기 관리
+│   ├── Schedule.tsx       # 일정 관리
+│   ├── Analytics.tsx      # 통계
+│   └── Settings.tsx       # 설정
+├── App.tsx                # 라우팅 설정
+└── main.tsx              # 엔트리 포인트
+```
