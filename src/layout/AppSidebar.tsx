@@ -15,7 +15,9 @@ import {
   TableIcon,
   UserCircleIcon,
 } from "../icons";
+import { useAuth } from "../context/AuthContext";
 import { useSidebar } from "../context/SidebarContext";
+import { getDiceBearAvatarUrl } from "../utils/avatar";
 import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -94,6 +96,7 @@ const othersItems: NavItem[] = [
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { user, isAuthenticated } = useAuth();
   const location = useLocation();
 
   const [openSubmenu, setOpenSubmenu] = useState<{
@@ -368,7 +371,32 @@ const AppSidebar: React.FC = () => {
             </div>
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
+        {isExpanded || isHovered || isMobileOpen ? (
+          <>
+            <div className="mx-auto mb-4 w-full max-w-60 rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+              {isAuthenticated && user ? (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={getDiceBearAvatarUrl(user.id)}
+                    alt=""
+                    className="h-10 w-10 shrink-0 rounded-full object-cover"
+                  />
+                  <p className="min-w-0 flex-1 font-medium text-gray-800 dark:text-white text-theme-sm truncate" title={user.nickname}>
+                    {user.nickname}
+                  </p>
+                </div>
+              ) : (
+                <Link
+                  to="/signin"
+                  className="block font-medium text-brand-500 text-theme-sm hover:text-brand-600 dark:text-brand-400"
+                >
+                  로그인
+                </Link>
+              )}
+            </div>
+            <SidebarWidget />
+          </>
+        ) : null}
       </div>
     </aside>
   );

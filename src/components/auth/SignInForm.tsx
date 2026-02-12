@@ -5,11 +5,13 @@ import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
+import { useAuth } from "../../context/AuthContext";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
 export default function SignInForm() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [formData, setFormData] = useState({ id: "", password: "" });
@@ -43,6 +45,12 @@ export default function SignInForm() {
         setSubmitMessage(data?.message ?? data?.error ?? `로그인 실패 (${res.status})`);
         return;
       }
+      login({
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        expiresIn: data.expiresIn ?? 900,
+        user: data.user,
+      });
       setSubmitStatus("success");
       navigate("/", { replace: true });
     } catch (err) {
