@@ -11,6 +11,7 @@ import { ThemeProvider } from "./context/ThemeContext.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider>
+      {/* 인증 상태 전역 제공. 로그인 유지(localStorage), @see docs/AUTH.md */}
       <AuthProvider>
         <AppWrapper>
           <App />

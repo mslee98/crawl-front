@@ -6,6 +6,11 @@ import Label from "../form/Label";
 import { useAuth } from "../../context/AuthContext";
 import { getDiceBearAvatarUrl } from "../../utils/avatar";
 
+/**
+ * 프로필 페이지 상단 카드 (이름·아바타·소셜 등)
+ * - 로그인 시: DiceBear 아바타 + 닉네임 표시
+ * - 비로그인 시: 기본 이미지 + placeholder 이름
+ */
 export default function UserMetaCard() {
   const { isOpen, openModal, closeModal } = useModal();
   const { user } = useAuth();

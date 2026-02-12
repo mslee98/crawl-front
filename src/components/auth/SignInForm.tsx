@@ -1,3 +1,10 @@
+/**
+ * 로그인 폼
+ * - 아이디·비밀번호 입력 (공백/띄어쓰기 저장 불가)
+ * - 제출: POST /auth/login { id, password } (평문)
+ * - 성공 시 AuthContext.login() 호출 후 대시보드(/)로 이동
+ * @see docs/AUTH.md
+ */
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
@@ -18,6 +25,7 @@ export default function SignInForm() {
   const [submitStatus, setSubmitStatus] = useState<"idle" | "loading" | "error" | "success">("idle");
   const [submitMessage, setSubmitMessage] = useState("");
 
+  /** 로그인 API 호출 → 성공 시 context에 토큰·유저 저장 후 리다이렉트 */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitStatus("idle");
@@ -45,6 +53,7 @@ export default function SignInForm() {
         setSubmitMessage(data?.message ?? data?.error ?? `로그인 실패 (${res.status})`);
         return;
       }
+      // 백엔드 응답을 그대로 context에 저장 (localStorage 동기화는 AuthContext에서)
       login({
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,

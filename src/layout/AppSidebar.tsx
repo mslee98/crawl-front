@@ -371,6 +371,7 @@ const AppSidebar: React.FC = () => {
             </div>
           </div>
         </nav>
+        {/* 사이드바 하단: 로그인 시 닉네임+아바타, 비로그인 시 로그인 링크 */}
         {isExpanded || isHovered || isMobileOpen ? (
           <>
             <div className="mx-auto mb-4 w-full max-w-60 rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">

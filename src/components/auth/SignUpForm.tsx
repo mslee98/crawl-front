@@ -1,3 +1,11 @@
+/**
+ * 회원가입 폼
+ * - 아이디: 영문·숫자·_ 2~100자, 실시간 입력 제한(dataRuleCheckForID) + Caps Lock 안내
+ * - 닉네임·이메일·비밀번호: 필수, 공백/띄어쓰기 입력 불가, 에러는 blur 후 표시
+ * - 비밀번호: 8자 이상, 영문+숫자 포함 / 비밀번호 확인 일치
+ * - 제출: POST /auth/signup { id, email, password, nickname } (평문 비밀번호)
+ * @see docs/AUTH.md
+ */
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
@@ -11,7 +19,7 @@ const KOREAN_REGEX = /[가-힣]/;
 /** 아이디: 영문, 숫자, _ 만 허용 (백엔드 2~100자) */
 const ID_REGEX = /^[a-zA-Z0-9_]+$/;
 
-/** 아이디 입력 규칙: 0~9, a~z, A~Z, "_" 만 허용 (charCodeAt 기준) */
+/** 아이디 입력 규칙: 0~9, a~z, A~Z, "_" 만 허용 (charCodeAt 기준). 한 글자씩 검사용 */
 function dataRuleCheckForID(ch: string): boolean {
   if (ch.length !== 1) return false;
   const ascii = ch.charCodeAt(0);
@@ -44,7 +52,7 @@ export default function SignUpForm() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [capsLockOn, setCapsLockOn] = useState(false);
 
-  /** Caps Lock 감지 (ID input onKeyDown에서 사용) */
+  /** Caps Lock 감지 (ID input onKeyDown). 켜져 있으면 하단에 안내 문구 표시 */
   const checkCapsLock = (e: React.KeyboardEvent<HTMLInputElement>) => {
     setCapsLockOn(e.getModifierState("CapsLock"));
   };
@@ -70,6 +78,7 @@ export default function SignUpForm() {
     terms?: string;
   };
 
+  /** 실시간 검증. touched된 필드에만 에러 문구 표시 (초기에는 에러 안 보임) */
   const errors = useMemo<FormErrors>(() => {
     const next: FormErrors = {};
     const id = formData.id.trim();
@@ -79,10 +88,11 @@ export default function SignUpForm() {
     const passwordConfirm = formData.passwordConfirm;
 
     if (!id) next.id = "아이디를 입력하세요.";
-    if (!nickname) next.nickname = "닉네임을 입력하세요.";
     else if (KOREAN_REGEX.test(id)) next.id = "한글은 입력할 수 없습니다.";
     else if (!ID_REGEX.test(id)) next.id = "영문, 숫자, _(언더스코어)만 사용할 수 있습니다.";
     else if (id.length < 2 || id.length > 100) next.id = "2~100자로 입력하세요.";
+
+    if (!nickname) next.nickname = "닉네임을 입력하세요.";
 
     if (!email) next.email = "이메일을 입력하세요.";
 
@@ -102,8 +112,10 @@ export default function SignUpForm() {
   const [submitStatus, setSubmitStatus] = useState<"idle" | "loading" | "error" | "success">("idle");
   const [submitMessage, setSubmitMessage] = useState("");
 
+  /** blur 시 해당 필드를 touched로 표시 → 그때부터 해당 필드 에러 표시 */
   const setTouchedField = (field: keyof typeof touched) => () => setTouched((p) => ({ ...p, [field]: true }));
 
+  /** 회원가입 API 호출. 성공 시 /signin으로 이동 */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitStatus("idle");
