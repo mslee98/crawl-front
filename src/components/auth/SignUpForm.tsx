@@ -7,17 +7,20 @@ import Checkbox from "../form/input/Checkbox";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
-/** 비밀번호 SHA-256 해시 후 hex 문자열로 반환 */
-async function hashPassword(password: string): Promise<string> {
-  const enc = new TextEncoder();
-  const buf = await crypto.subtle.digest("SHA-256", enc.encode(password));
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
 const KOREAN_REGEX = /[가-힣]/;
-const ALPHANUMERIC_REGEX = /^[a-zA-Z0-9]+$/;
+/** 아이디: 영문, 숫자, _ 만 허용 (백엔드 2~100자) */
+const ID_REGEX = /^[a-zA-Z0-9_]+$/;
+
+/** 아이디 입력 규칙: 0~9, a~z, A~Z, "_" 만 허용 (charCodeAt 기준) */
+function dataRuleCheckForID(ch: string): boolean {
+  if (ch.length !== 1) return false;
+  const ascii = ch.charCodeAt(0);
+  if (ascii >= 48 && ascii <= 57) return true; /* 0-9 */
+  if (ascii >= 65 && ascii <= 90) return true; /* A-Z */
+  if (ascii >= 97 && ascii <= 122) return true; /* a-z */
+  if (ascii === 95) return true; /* _ */
+  return false;
+}
 
 export default function SignUpForm() {
   const navigate = useNavigate();
@@ -26,20 +29,41 @@ export default function SignUpForm() {
   const [isChecked, setIsChecked] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
+    nickname: "",
     email: "",
     password: "",
     passwordConfirm: "",
   });
   const [touched, setTouched] = useState({
     id: false,
+    nickname: false,
     email: false,
     password: false,
     passwordConfirm: false,
   });
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
+
+  /** Caps Lock 감지 (ID input onKeyDown에서 사용) */
+  const checkCapsLock = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    setCapsLockOn(e.getModifierState("CapsLock"));
+  };
+
+  /** ID 입력: 공백 제거, 공백이면 허용, 아니면 마지막 글자만 규칙 통과 시 set */
+  const getLoginID = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\s/g, "");
+    if (value === "") {
+      setFormData((p) => ({ ...p, id: value }));
+      return;
+    }
+    const lastChar = value[value.length - 1];
+    if (!dataRuleCheckForID(lastChar)) return;
+    setFormData((p) => ({ ...p, id: value }));
+  };
 
   type FormErrors = {
     id?: string;
+    nickname?: string;
     email?: string;
     password?: string;
     passwordConfirm?: string;
@@ -49,15 +73,16 @@ export default function SignUpForm() {
   const errors = useMemo<FormErrors>(() => {
     const next: FormErrors = {};
     const id = formData.id.trim();
+    const nickname = formData.nickname.trim();
     const email = formData.email.trim();
     const password = formData.password;
     const passwordConfirm = formData.passwordConfirm;
 
     if (!id) next.id = "아이디를 입력하세요.";
+    if (!nickname) next.nickname = "닉네임을 입력하세요.";
     else if (KOREAN_REGEX.test(id)) next.id = "한글은 입력할 수 없습니다.";
-    else if (!ALPHANUMERIC_REGEX.test(id)) next.id = "영문과 숫자만 사용할 수 있습니다.";
-    else if (id.length < 6) next.id = "6자 이상 입력하세요.";
-    else if (!/[a-zA-Z]/.test(id) || !/[0-9]/.test(id)) next.id = "영문과 숫자를 모두 포함하여 6자 이상 입력하세요.";
+    else if (!ID_REGEX.test(id)) next.id = "영문, 숫자, _(언더스코어)만 사용할 수 있습니다.";
+    else if (id.length < 2 || id.length > 100) next.id = "2~100자로 입력하세요.";
 
     if (!email) next.email = "이메일을 입력하세요.";
 
@@ -88,27 +113,26 @@ export default function SignUpForm() {
 
     setSubmitStatus("loading");
     try {
-      const passwordHash = await hashPassword(formData.password);
-      const loginRes = await fetch(`${API_BASE}/auth/login`, {
+      const signupRes = await fetch(`${API_BASE}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: formData.id.trim(),
           email: formData.email.trim(),
-          password: passwordHash,
-          username: formData.id.trim(),
-          termsAgreed: isChecked,
+          password: formData.password,
+          nickname: formData.nickname.trim(),
         }),
       });
-      const data = await loginRes.json().catch(() => ({}));
+      const data = await signupRes.json().catch(() => ({}));
 
-      if (!loginRes.ok) {
+      if (!signupRes.ok) {
         setSubmitStatus("error");
-        setSubmitMessage(data?.message ?? data?.error ?? `로그인 요청 실패 (${loginRes.status})`);
+        setSubmitMessage(data?.message ?? data?.error ?? `회원가입 요청 실패 (${signupRes.status})`);
         return;
       }
       setSubmitStatus("success");
-      setSubmitMessage("로그인되었습니다.");
-      navigate("/", { replace: true });
+      setSubmitMessage("회원가입되었습니다.");
+      navigate("/signin", { replace: true });
     } catch (err) {
       setSubmitStatus("error");
       setSubmitMessage(err instanceof Error ? err.message : "네트워크 오류가 발생했습니다.");
@@ -138,6 +162,7 @@ export default function SignUpForm() {
           </div>
           <div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
+              {/* 구글로 회원가입 */}
               <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
                 <svg
                   width="20"
@@ -165,6 +190,8 @@ export default function SignUpForm() {
                 </svg>
                 구글로 회원가입
               </button>
+
+              {/* X로 회원가입 */}
               <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
                 <svg
                   width="21"
@@ -191,6 +218,24 @@ export default function SignUpForm() {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="space-y-5">
+
+                {/* <!-- nickname --> */}
+                <div>
+                  <Label>
+                    닉네임<span className="text-error-500">*</span>
+                  </Label>
+                  <Input
+                    type="text"
+                    id="nickname"
+                    name="nickname"
+                    placeholder="닉네임을 입력하세요"
+                    value={formData.nickname}
+                    onChange={(e) => setFormData((p) => ({ ...p, nickname: e.target.value.replace(/\s/g, "") }))}
+                    onBlur={setTouchedField("nickname")}
+                    error={touched.nickname && !!errors.nickname}
+                    hint={touched.nickname ? errors.nickname : undefined}
+                  />
+                </div>
                 {/* <!-- id --> */}
                 <div>
                   <Label>
@@ -200,12 +245,19 @@ export default function SignUpForm() {
                     type="text"
                     id="id"
                     name="id"
-                    placeholder="영문, 숫자 포함 6자 이상"
+                    placeholder="영문, 숫자, _ 2~100자"
                     value={formData.id}
-                    onChange={(e) => setFormData((p) => ({ ...p, id: e.target.value }))}
+                    onChange={getLoginID}
+                    onKeyDown={checkCapsLock}
                     onBlur={setTouchedField("id")}
                     error={touched.id && !!errors.id}
-                    hint={touched.id ? errors.id : undefined}
+                    hint={
+                      touched.id && errors.id
+                        ? errors.id
+                        : capsLockOn
+                          ? "Caps Lock이 켜져 있습니다."
+                          : undefined
+                    }
                   />
                 </div>
                 {/* <!-- Email --> */}
@@ -219,7 +271,7 @@ export default function SignUpForm() {
                     name="email"
                     placeholder="이메일을 입력하세요"
                     value={formData.email}
-                    onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
+                    onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value.replace(/\s/g, "") }))}
                     onBlur={setTouchedField("email")}
                     error={touched.email && !!errors.email}
                     hint={touched.email ? errors.email : undefined}
@@ -237,7 +289,7 @@ export default function SignUpForm() {
                       placeholder="영문, 숫자 포함 8자 이상"
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
-                      onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))}
+                      onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value.replace(/\s/g, "") }))}
                       onBlur={setTouchedField("password")}
                       error={touched.password && !!errors.password}
                       hint={touched.password ? errors.password : undefined}
@@ -266,7 +318,7 @@ export default function SignUpForm() {
                       placeholder="비밀번호를 다시 입력하세요"
                       type={showPasswordConfirm ? "text" : "password"}
                       value={formData.passwordConfirm}
-                      onChange={(e) => setFormData((p) => ({ ...p, passwordConfirm: e.target.value }))}
+                      onChange={(e) => setFormData((p) => ({ ...p, passwordConfirm: e.target.value.replace(/\s/g, "") }))}
                       onBlur={setTouchedField("passwordConfirm")}
                       error={touched.passwordConfirm && !!errors.passwordConfirm}
                       hint={touched.passwordConfirm ? errors.passwordConfirm : undefined}

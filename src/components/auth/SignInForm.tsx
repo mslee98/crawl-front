@@ -1,14 +1,56 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
 
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
+
 export default function SignInForm() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [formData, setFormData] = useState({ id: "", password: "" });
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "loading" | "error" | "success">("idle");
+  const [submitMessage, setSubmitMessage] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitStatus("idle");
+    setSubmitMessage("");
+
+    const id = formData.id.trim();
+    const password = formData.password;
+    if (!id || !password) {
+      setSubmitStatus("error");
+      setSubmitMessage("아이디와 비밀번호를 입력하세요.");
+      return;
+    }
+
+    setSubmitStatus("loading");
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setSubmitStatus("error");
+        setSubmitMessage(data?.message ?? data?.error ?? `로그인 실패 (${res.status})`);
+        return;
+      }
+      setSubmitStatus("success");
+      navigate("/", { replace: true });
+    } catch (err) {
+      setSubmitStatus("error");
+      setSubmitMessage(err instanceof Error ? err.message : "네트워크 오류가 발생했습니다.");
+    }
+  };
+
   return (
     <div className="flex flex-col flex-1">
       <div className="w-full max-w-md pt-10 mx-auto">
@@ -17,17 +59,17 @@ export default function SignInForm() {
           className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
         >
           <ChevronLeftIcon className="size-5" />
-          Back to dashboard
+          대시보드로 돌아가기
         </Link>
       </div>
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
         <div>
           <div className="mb-5 sm:mb-8">
             <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
-              Sign In
+              로그인
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your email and password to sign in!
+              아이디와 비밀번호를 입력하여 로그인하세요.
             </p>
           </div>
           <div>
@@ -57,7 +99,7 @@ export default function SignInForm() {
                     fill="#EB4335"
                   />
                 </svg>
-                Sign in with Google
+                구글로 로그인
               </button>
               <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
                 <svg
@@ -70,7 +112,7 @@ export default function SignInForm() {
                 >
                   <path d="M15.6705 1.875H18.4272L12.4047 8.75833L19.4897 18.125H13.9422L9.59717 12.4442L4.62554 18.125H1.86721L8.30887 10.7625L1.51221 1.875H7.20054L11.128 7.0675L15.6705 1.875ZM14.703 16.475H16.2305L6.37054 3.43833H4.73137L14.703 16.475Z" />
                 </svg>
-                Sign in with X
+                X로 로그인
               </button>
             </div>
             <div className="relative py-3 sm:py-5">
@@ -79,26 +121,33 @@ export default function SignInForm() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="p-2 text-gray-400 bg-white dark:bg-gray-900 sm:px-5 sm:py-2">
-                  Or
+                  또는
                 </span>
               </div>
             </div>
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="space-y-6">
                 <div>
                   <Label>
-                    Email <span className="text-error-500">*</span>{" "}
+                    아이디 <span className="text-error-500">*</span>{" "}
                   </Label>
-                  <Input placeholder="info@gmail.com" />
+                  <Input
+                    type="text"
+                    placeholder="아이디를 입력하세요"
+                    value={formData.id}
+                    onChange={(e) => setFormData((p) => ({ ...p, id: e.target.value.replace(/\s/g, "") }))}
+                  />
                 </div>
                 <div>
                   <Label>
-                    Password <span className="text-error-500">*</span>{" "}
+                    비밀번호 <span className="text-error-500">*</span>{" "}
                   </Label>
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
+                      placeholder="비밀번호를 입력하세요"
+                      value={formData.password}
+                      onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value.replace(/\s/g, "") }))}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -112,23 +161,26 @@ export default function SignInForm() {
                     </span>
                   </div>
                 </div>
+                {submitStatus === "error" && submitMessage && (
+                  <p className="text-sm text-error-500">{submitMessage}</p>
+                )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Checkbox checked={isChecked} onChange={setIsChecked} />
                     <span className="block font-normal text-gray-700 text-theme-sm dark:text-gray-400">
-                      Keep me logged in
+                      로그인 상태 유지
                     </span>
                   </div>
                   <Link
                     to="/reset-password"
                     className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
                   >
-                    Forgot password?
+                    비밀번호를 잊으셨나요?
                   </Link>
                 </div>
                 <div>
-                  <Button className="w-full" size="sm">
-                    Sign in
+                  <Button type="submit" className="w-full" size="sm" disabled={submitStatus === "loading"}>
+                    {submitStatus === "loading" ? "로그인 중..." : "로그인"}
                   </Button>
                 </div>
               </div>
@@ -136,12 +188,12 @@ export default function SignInForm() {
 
             <div className="mt-5">
               <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
-                Don&apos;t have an account? {""}
+                계정이 없으신가요? {""}
                 <Link
                   to="/signup"
                   className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
                 >
-                  Sign Up
+                  회원가입
                 </Link>
               </p>
             </div>
