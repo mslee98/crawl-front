@@ -14,6 +14,8 @@ import {
   PlugInIcon,
   TableIcon,
   UserCircleIcon,
+  DanggeunLogoIcon,
+  BeongaeLogoIcon,
 } from "../icons";
 import { useAuth } from "../context/AuthContext";
 import { useSidebar } from "../context/SidebarContext";
@@ -33,6 +35,16 @@ const navItems: NavItem[] = [
     icon: <GridIcon />,
     name: "Dashboard",
     subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+  },
+  {
+    icon: <DanggeunLogoIcon />,
+    name: "당근마켓",
+    path: "/carrot",
+  },
+  {
+    icon: <BeongaeLogoIcon />,
+    name: "번개장터",
+    path: "/beongae",
   },
   {
     icon: <CalenderIcon />,
