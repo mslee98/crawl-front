@@ -39,7 +39,7 @@ const navItems: NavItem[] = [
   {
     icon: <DanggeunLogoIcon />,
     name: "당근마켓",
-    path: "/carrot",
+    path: "/danggeun",
   },
   {
     icon: <BeongaeLogoIcon />,

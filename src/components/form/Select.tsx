@@ -11,6 +11,8 @@ interface SelectProps {
   onChange: (value: string) => void;
   className?: string;
   defaultValue?: string;
+  /** 제어 모드: 지정 시 부모가 값을 제어합니다 (연동 셀렉트 등) */
+  value?: string;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -19,14 +21,16 @@ const Select: React.FC<SelectProps> = ({
   onChange,
   className = "",
   defaultValue = "",
+  value: controlledValue,
 }) => {
-  // Manage the selected value
-  const [selectedValue, setSelectedValue] = useState<string>(defaultValue);
+  const [internalValue, setInternalValue] = useState<string>(defaultValue);
+  const isControlled = controlledValue !== undefined;
+  const selectedValue = isControlled ? controlledValue : internalValue;
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    setSelectedValue(value);
-    onChange(value); // Trigger parent handler
+    if (!isControlled) setInternalValue(value);
+    onChange(value);
   };
 
   return (
