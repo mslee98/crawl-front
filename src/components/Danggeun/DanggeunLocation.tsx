@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Select from "../form/Select";
 import Button from "../ui/button/Button";
+import { useStanReginCd } from "../../hooks/useStanReginCd";
 import DanggeunExtraSettings from "./DanggeunExtraSettings";
-import { locationData } from "./locationData";
 
 const DANGGEUN_FORM_KEY = "danggeun_form";
 
@@ -67,23 +67,15 @@ export default function DanggeunLocation() {
     });
   }, [selectedSi, selectedGu, selectedDong, step, keyword, priceMin, priceMax, categoryIds]);
 
-  const siOptions = useMemo(
-    () => locationData.map((s) => ({ value: s.value, label: s.label })),
-    []
-  );
-
-  const guOptions = useMemo(() => {
-    if (!selectedSi) return [];
-    const si = locationData.find((s) => s.value === selectedSi);
-    return si?.gu.map((g) => ({ value: g.value, label: g.label })) ?? [];
-  }, [selectedSi]);
-
-  const dongOptions = useMemo(() => {
-    if (!selectedSi || !selectedGu) return [];
-    const si = locationData.find((s) => s.value === selectedSi);
-    const gu = si?.gu.find((g) => g.value === selectedGu);
-    return gu?.dong ?? [];
-  }, [selectedSi, selectedGu]);
+  const {
+    siOptions,
+    guOptions,
+    dongOptions,
+    loadingSi,
+    loadingGu,
+    loadingDong,
+    error,
+  } = useStanReginCd(selectedSi, selectedGu);
 
   const handleSiChange = (value: string) => {
     setSelectedSi(value);
@@ -121,7 +113,7 @@ export default function DanggeunLocation() {
                 </label>
                 <Select
                   options={siOptions}
-                  placeholder="시·도 선택"
+                  placeholder={loadingSi ? "시·도 로딩 중..." : "시·도 선택"}
                   value={selectedSi}
                   onChange={handleSiChange}
                 />
@@ -132,7 +124,7 @@ export default function DanggeunLocation() {
                 </label>
                 <Select
                   options={guOptions}
-                  placeholder="구·군 선택"
+                  placeholder={loadingGu ? "구·군 로딩 중..." : "구·군 선택"}
                   value={selectedGu}
                   onChange={handleGuChange}
                   defaultValue=""
@@ -144,13 +136,19 @@ export default function DanggeunLocation() {
                 </label>
                 <Select
                   options={dongOptions}
-                  placeholder="동 선택"
+                  placeholder={loadingDong ? "동 로딩 중..." : "동 선택"}
                   value={selectedDong}
                   onChange={setSelectedDong}
                   defaultValue=""
                 />
               </div>
             </div>
+
+            {error && (
+              <p className="mt-4 text-center text-sm text-red-500 dark:text-red-400">
+                {error}
+              </p>
+            )}
 
             {(selectedSi || selectedGu || selectedDong) && (
               <p className="mt-6 text-center text-base text-gray-600 dark:text-gray-400">
